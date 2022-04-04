@@ -618,7 +618,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
     // return Row(children: toggles);
   }
 
-  String timestamp() => DateTime.now().millisecondsSinceEpoch.toString();
+  String timestamp() => DateTime.now().toString();
 
   void showInSnackBar(String message) {
     // ignore: deprecated_member_use
@@ -647,7 +647,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
 
     final CameraController cameraController = CameraController(
       cameraDescription,
-      kIsWeb ? ResolutionPreset.max : ResolutionPreset.medium,
+      kIsWeb ? ResolutionPreset.max : ResolutionPreset.max,
       enableAudio: enableAudio,
       imageFormatGroup: ImageFormatGroup.jpeg,
     );
@@ -694,7 +694,11 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
     }
   }
 
-  void onTakePictureButtonPressed() {
+  void onTakePictureButtonPressed() async {
+    final Directory? extDir = await syspath.getExternalStorageDirectory();
+    final String dirPath = '${extDir!.path}/Gallery/Images';
+    await Directory(dirPath).create(recursive: true);
+    final String filePath = '$dirPath/${timestamp()}.jpg';
     takePicture().then((XFile? file) {
       if (mounted) {
         setState(() {
@@ -702,9 +706,15 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
           videoController?.dispose();
           videoController = null;
         });
-        if (file != null) {
-          showInSnackBar('Picture saved to ${file.path}');
-        }
+
+        File pickedImage = File(imageFile!.path);
+        pickedImage.copy(filePath);
+        // showInSnackBar('Picture saved to ${pickedImage.path} locally');
+        showInSnackBar('Image Captured');
+
+        // if (file != null) {
+        //   showInSnackBar('Picture saved to ${file.path}');
+        // }
       }
     });
   }
