@@ -165,7 +165,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
                 ElevatedButton.icon(
                   onPressed: () {},
                   icon: const Icon(Icons.upload_file),
-                  label: Text("Upload"),
+                  label: const Text("Upload"),
                 )
               ],
             ),
@@ -607,7 +607,8 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
           ),
         );
       }
-      // First two items are deleted as the phone has 4 cameras
+      // Condition check if the phone has two cameras or more
+      // Need to rework on this condition as the logic fails to build for 3 camera system
       if (toggles.length == 2) {
         return Row(children: toggles);
       } else {}
@@ -801,7 +802,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
     });
   }
 
-  void onVideoRecordButtonPressed() {
+  void onVideoRecordButtonPressed() async {
     startVideoRecording().then((_) {
       if (mounted) {
         setState(() {});
@@ -809,14 +810,22 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
     });
   }
 
-  void onStopButtonPressed() {
+  void onStopButtonPressed() async {
+    final Directory? extDir = await syspath.getExternalStorageDirectory();
+    final String dirPath = '${extDir!.path}/Gallery/Videos';
+    await Directory(dirPath).create(recursive: true);
+    final String filePath = '$dirPath/${timestamp()}.mp4';
     stopVideoRecording().then((XFile? file) {
       if (mounted) {
         setState(() {});
       }
       if (file != null) {
-        showInSnackBar('Video recorded to ${file.path}');
+        // showInSnackBar('Video recorded to ${file.path}');
         videoFile = file;
+        File pickedVideo = File(videoFile!.path);
+        pickedVideo.copy(filePath);
+        // showInSnackBar('Picture saved to ${pickedImage.path} locally');
+        showInSnackBar('Video Captured');
         _startVideoPlayer();
       }
     });
@@ -1042,6 +1051,7 @@ class CameraApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: CameraExampleHome(),
     );
   }
@@ -1066,372 +1076,3 @@ Future<void> main() async {
 /// with `!` and `?` on the stable branch.
 // TODO(ianh): Remove this once we roll stable in late 2021.
 T? _ambiguate<T>(T? value) => value;
-
-// // main.dart
-// import 'package:flutter/foundation.dart';
-// import 'package:flutter/material.dart';
-// import 'dart:io';
-// //import 'package:firebase_core/firebase_core.dart';
-// //import 'package:firebase_storage/firebase_storage.dart';
-// import 'package:path/path.dart' as path;
-// import 'package:image_picker/image_picker.dart';
-// import 'package:device_info_plus/device_info_plus.dart';
-// import 'package:path_provider/path_provider.dart';
-
-// void main() async {
-//   WidgetsFlutterBinding.ensureInitialized();
-
-//   // Initialize a new Firebase App instance
-//   //await Firebase.initializeApp();
-//   runApp(const MyApp());
-// }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({Key? key}) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       // Remove the debug banner
-//       debugShowCheckedModeBanner: false,
-//       title: 'Offsetmessung',
-//       theme: ThemeData(primarySwatch: Colors.blue),
-//       home: const HomePage(),
-//     );
-//   }
-// }
-
-// class HomePage extends StatefulWidget {
-//   const HomePage({Key? key}) : super(key: key);
-
-//   @override
-//   _HomePageState createState() => _HomePageState();
-// }
-
-// class _HomePageState extends State<HomePage> {
-//   //FirebaseStorage storage = FirebaseStorage.instance;
-//   //String deviceId = 'test';
-
-//   // Select and image from the gallery or take a picture with the camera
-//   // Then upload to Firebase Storage
-//   Future<void> _upload(String inputSource) async {
-//     final picker = ImagePicker();
-//     XFile? pickedImage;
-//     foo();
-//     String? deviceId = await _getId();
-//     print(deviceId);
-//     print("---------------------------------");
-//     print(inputSource);
-//     try {
-//       pickedImage = await picker.pickImage(
-//         source:
-//             inputSource == 'camera' ? ImageSource.camera : ImageSource.gallery,
-//         //imageQuality: 10,
-//         //maxHeight: 2560,
-//         //maxWidth: 1920
-//       );
-
-//       final String fileName = path.basename(pickedImage!.path);
-//       int ilen = await pickedImage.length();
-//       print('Len: $ilen');
-//       print(fileName);
-//       print("---------------------------------");
-//       File imageFile = File(pickedImage.path);
-//       print(imageFile);
-//       print("---------------------------------");
-//       String _filePath = _extDirPath + '/' + fileName;
-//       imageFile.copy(_filePath);
-//       print(_filePath);
-//       String _filePath1 = _extDirPath + 'sampl.jpg';
-//       pickedImage.saveTo(_filePath1);
-//       //try {
-//       //  // Uploading the selected image with some custom meta data
-//       //  String? deviceId = await _getId();
-//       //  if (deviceId != null) {
-//       //    await storage.ref(fileName).putFile(
-//       //        imageFile,
-//       //        SettableMetadata(customMetadata: {
-//       //          'uploaded_by': 'Some code monkey',
-//       //          'description': deviceId
-//       //        }));
-//       //  }
-
-//       //  // Refresh the UI
-//       //  setState(() {});
-//       //} on FirebaseException catch (error) {
-//       //  if (kDebugMode) {
-//       //    print(error);
-//       //  }
-//       //}
-//     } catch (err) {
-//       // if (kDebugMode) {
-//       print("Error:- " + err.toString());
-//       // }
-//     }
-//   }
-
-//   // TODO: Remvoe global variabl
-//   String _extDirPath = '';
-
-//   Future<String> createFolderInAppDocDir(String folderName) async {
-//     //Get this App Document Directory
-//     final Directory? _appDocDir;
-//     if (Platform.isWindows) {
-//       _appDocDir = Directory.current;
-//     } else {
-//       _appDocDir = await getExternalStorageDirectory();
-//     }
-//     //App Document Directory + folder name
-//     final Directory _appDocDirFolder =
-//         Directory('${_appDocDir!.path}/$folderName/');
-
-//     print("App Doc Dir Path" + _appDocDir.path);
-//     print("Folder Name" + folderName);
-
-//     if (await _appDocDirFolder.exists()) {
-//       //if folder already exists return path
-//       return _appDocDirFolder.path;
-//     } else {
-//       //if folder not exists create folder and then return its path
-//       final Directory _appDocDirNewFolder =
-//           await _appDocDirFolder.create(recursive: true);
-//       return _appDocDirNewFolder.path;
-//     }
-//   }
-
-//   // Retrieve the uploaded images
-//   // This function is called when the app launches for the first time or when an image is uploaded or deleted
-//   //Future<List<Map<String, dynamic>>> _loadImages() async {
-//   //  List<Map<String, dynamic>> files = [];
-
-//   //  final ListResult result = await storage.ref().list();
-//   //  final List<Reference> allFiles = result.items;
-
-//   //  await Future.forEach<Reference>(allFiles, (file) async {
-//   //    final String fileUrl = await file.getDownloadURL();
-//   //    final FullMetadata fileMeta = await file.getMetadata();
-//   //    files.add({
-//   //      "url": fileUrl,
-//   //      "path": file.fullPath,
-//   //      "uploaded_by": fileMeta.customMetadata?['uploaded_by'] ?? 'Nobody',
-//   //      "description":
-//   //          fileMeta.customMetadata?['description'] ?? 'No description'
-//   //    });
-//   //  });
-
-//   //  return files;
-//   //}
-
-//   // Delete the selected image
-//   // This function is called when a trash icon is pressed
-//   Future<void> _delete(String ref) async {
-//     //await storage.ref(ref).delete();
-//     // Rebuild the UI
-//     setState(() {});
-//   }
-
-//   Future<String?> _getId() async {
-//     var deviceInfo = DeviceInfoPlugin();
-//     if (Platform.isIOS) {
-//       // import 'dart:io'
-//       var iosDeviceInfo = await deviceInfo.iosInfo;
-//       return iosDeviceInfo.identifierForVendor; // unique ID on iOS
-//     } else {
-//       var androidDeviceInfo = await deviceInfo.androidInfo;
-//       return androidDeviceInfo.androidId; // unique ID on Android
-//     }
-//   }
-
-//   static void foo() {
-//     print('this is an important test');
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Offsetmessung'),
-//       ),
-//       body: Padding(
-//         padding: const EdgeInsets.all(20),
-//         child: Column(
-//           children: [
-//             Row(
-//               mainAxisAlignment: MainAxisAlignment.spaceAround,
-//               children: [
-//                 ElevatedButton.icon(
-//                     onPressed: () {
-//                       _upload('camera');
-//                     },
-//                     icon: const Icon(Icons.camera),
-//                     label: const Text('camera')),
-//                 ElevatedButton.icon(
-//                     onPressed: () async {
-//                       _extDirPath = await createFolderInAppDocDir('gallery');
-//                     },
-//                     icon: const Icon(Icons.library_add),
-//                     label: const Text('Gallery')),
-//               ],
-//             ),
-//             //Expanded(
-//             //  child: FutureBuilder(
-//             //    future: _loadImages(),
-//             //    builder: (context,
-//             //        AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
-//             //      if (snapshot.connectionState == ConnectionState.done) {
-//             //        return ListView.builder(
-//             //          itemCount: snapshot.data?.length ?? 0,
-//             //          itemBuilder: (context, index) {
-//             //            final Map<String, dynamic> image =
-//             //                snapshot.data![index];
-
-//             //            return Card(
-//             //              margin: const EdgeInsets.symmetric(vertical: 10),
-//             //              child: ListTile(
-//             //                dense: false,
-//             //                leading: Image.network(image['url']),
-//             //                title: Text(image['uploaded_by']),
-//             //                subtitle: Text(image['description']),
-//             //                trailing: IconButton(
-//             //                  onPressed: () => _delete(image['path']),
-//             //                  icon: const Icon(
-//             //                    Icons.delete,
-//             //                    color: Colors.red,
-//             //                  ),
-//             //                ),
-//             //              ),
-//             //            );
-//             //          },
-//             //        );
-//             //      }
-
-//             //      return const Center(
-//             //        child: CircularProgressIndicator(),
-//             //      );
-//             //    },
-//             //  ),
-//             //),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-
-
-// // import 'package:flutter/material.dart';
-
-// // void main() {
-// //   runApp(const MyApp());
-// // }
-
-// // class MyApp extends StatelessWidget {
-// //   const MyApp({Key? key}) : super(key: key);
-
-// //   // This widget is the root of your application.
-// //   @override
-// //   Widget build(BuildContext context) {
-// //     return MaterialApp(
-// //       title: 'Flutter Demo',
-// //       theme: ThemeData(
-// //         // This is the theme of your application.
-// //         //
-// //         // Try running your application with "flutter run". You'll see the
-// //         // application has a blue toolbar. Then, without quitting the app, try
-// //         // changing the primarySwatch below to Colors.green and then invoke
-// //         // "hot reload" (press "r" in the console where you ran "flutter run",
-// //         // or simply save your changes to "hot reload" in a Flutter IDE).
-// //         // Notice that the counter didn't reset back to zero; the application
-// //         // is not restarted.
-// //         primarySwatch: Colors.blue,
-// //       ),
-// //       home: const MyHomePage(title: 'Flutter Demo Home Page'),
-// //     );
-// //   }
-// // }
-
-// // class MyHomePage extends StatefulWidget {
-// //   const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-// //   // This widget is the home page of your application. It is stateful, meaning
-// //   // that it has a State object (defined below) that contains fields that affect
-// //   // how it looks.
-
-// //   // This class is the configuration for the state. It holds the values (in this
-// //   // case the title) provided by the parent (in this case the App widget) and
-// //   // used by the build method of the State. Fields in a Widget subclass are
-// //   // always marked "final".
-
-// //   final String title;
-
-// //   @override
-// //   State<MyHomePage> createState() => _MyHomePageState();
-// // }
-
-// // class _MyHomePageState extends State<MyHomePage> {
-// //   int _counter = 0;
-
-// //   void _incrementCounter() {
-// //     setState(() {
-// //       // This call to setState tells the Flutter framework that something has
-// //       // changed in this State, which causes it to rerun the build method below
-// //       // so that the display can reflect the updated values. If we changed
-// //       // _counter without calling setState(), then the build method would not be
-// //       // called again, and so nothing would appear to happen.
-// //       _counter++;
-// //     });
-// //   }
-
-// //   @override
-// //   Widget build(BuildContext context) {
-// //     // This method is rerun every time setState is called, for instance as done
-// //     // by the _incrementCounter method above.
-// //     //
-// //     // The Flutter framework has been optimized to make rerunning build methods
-// //     // fast, so that you can just rebuild anything that needs updating rather
-// //     // than having to individually change instances of widgets.
-// //     return Scaffold(
-// //       appBar: AppBar(
-// //         // Here we take the value from the MyHomePage object that was created by
-// //         // the App.build method, and use it to set our appbar title.
-// //         title: Text(widget.title),
-// //       ),
-// //       body: Center(
-// //         // Center is a layout widget. It takes a single child and positions it
-// //         // in the middle of the parent.
-// //         child: Column(
-// //           // Column is also a layout widget. It takes a list of children and
-// //           // arranges them vertically. By default, it sizes itself to fit its
-// //           // children horizontally, and tries to be as tall as its parent.
-// //           //
-// //           // Invoke "debug painting" (press "p" in the console, choose the
-// //           // "Toggle Debug Paint" action from the Flutter Inspector in Android
-// //           // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-// //           // to see the wireframe for each widget.
-// //           //
-// //           // Column has various properties to control how it sizes itself and
-// //           // how it positions its children. Here we use mainAxisAlignment to
-// //           // center the children vertically; the main axis here is the vertical
-// //           // axis because Columns are vertical (the cross axis would be
-// //           // horizontal).
-// //           mainAxisAlignment: MainAxisAlignment.center,
-// //           children: <Widget>[
-// //             const Text(
-// //               'You have pushed the button this many times:',
-// //             ),
-// //             Text(
-// //               '$_counter',
-// //               style: Theme.of(context).textTheme.headline4,
-// //             ),
-// //           ],
-// //         ),
-// //       ),
-// //       floatingActionButton: FloatingActionButton(
-// //         onPressed: _incrementCounter,
-// //         tooltip: 'Increment',
-// //         child: const Icon(Icons.add),
-// //       ), // This trailing comma makes auto-formatting nicer for build methods.
-// //     );
-// //   }
-// // }
