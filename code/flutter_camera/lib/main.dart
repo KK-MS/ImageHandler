@@ -10,6 +10,7 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_camera/gallery_screen.dart';
 import 'package:video_player/video_player.dart';
 import 'package:path_provider/path_provider.dart' as syspath;
 
@@ -63,6 +64,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
   double _maxAvailableZoom = 1.0;
   double _currentScale = 1.0;
   double _baseScale = 1.0;
+  List<File> capturedImages = [];
 
   // Counting pointers (number of user fingers on screen)
   int _pointers = 0;
@@ -129,7 +131,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
-        title: const Text('Camera example'),
+        title: const Text('Camera'),
       ),
       body: Column(
         children: <Widget>[
@@ -158,14 +160,24 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
           Padding(
             padding: const EdgeInsets.all(5.0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
                 _cameraTogglesRowWidget(),
-                _thumbnailWidget(),
-                ElevatedButton.icon(
+                const SizedBox(
+                  width: 20,
+                ),
+                _galleryView(),
+                const SizedBox(
+                  width: 10,
+                ),
+                // _thumbnailWidget(),
+                IconButton(
                   onPressed: () {},
-                  icon: const Icon(Icons.upload_file),
-                  label: const Text("Upload"),
+                  icon: const Icon(
+                    Icons.upload_file,
+                    color: Colors.black,
+                    size: 36,
+                  ),
                 )
               ],
             ),
@@ -181,7 +193,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
 
     if (cameraController == null || !cameraController.value.isInitialized) {
       return const Text(
-        'Tap a camera',
+        'Choose a front or back camera',
         style: TextStyle(
           color: Colors.white,
           fontSize: 24.0,
@@ -225,49 +237,74 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
     await controller!.setZoomLevel(_currentScale);
   }
 
-  /// Display the thumbnail of the captured image or video.
-  Widget _thumbnailWidget() {
-    final VideoPlayerController? localVideoController = videoController;
-
-    return Expanded(
-      child: Align(
-        alignment: Alignment.centerRight,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            if (localVideoController == null && imageFile == null)
-              Container()
-            else
-              SizedBox(
-                child: (localVideoController == null)
-                    ? (
-                        // The captured image on the web contains a network-accessible URL
-                        // pointing to a location within the browser. It may be displayed
-                        // either with Image.network or Image.memory after loading the image
-                        // bytes to memory.
-                        kIsWeb
-                            ? Image.network(imageFile!.path)
-                            : Image.file(File(imageFile!.path)))
-                    : Container(
-                        child: Center(
-                          child: AspectRatio(
-                              aspectRatio:
-                                  localVideoController.value.size != null
-                                      ? localVideoController.value.aspectRatio
-                                      : 1.0,
-                              child: VideoPlayer(localVideoController)),
-                        ),
-                        decoration: BoxDecoration(
-                            border: Border.all(color: Colors.pink)),
-                      ),
-                width: 64.0,
-                height: 64.0,
-              ),
-          ],
-        ),
+  Widget _galleryView() {
+    return GestureDetector(
+      onTap: () {
+        if (capturedImages.isEmpty) {
+          Container();
+        }
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    GalleryScreen(images: capturedImages.reversed.toList())));
+      },
+      child: Container(
+        height: 36,
+        width: 36,
+        decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            image: capturedImages.isNotEmpty
+                ? DecorationImage(
+                    image: FileImage(capturedImages.last), fit: BoxFit.cover)
+                : null),
       ),
     );
   }
+
+  /// Display the thumbnail of the captured image or video.
+  // Widget _thumbnailWidget() {
+  //   final VideoPlayerController? localVideoController = videoController;
+
+  //   return Expanded(
+  //     child: Align(
+  //       alignment: Alignment.centerRight,
+  //       child: Row(
+  //         mainAxisSize: MainAxisSize.min,
+  //         children: <Widget>[
+  //           if (localVideoController == null && imageFile == null)
+  //             Container()
+  //           else
+  //             SizedBox(
+  //               child: (localVideoController == null)
+  //                   ? (
+  //                       // The captured image on the web contains a network-accessible URL
+  //                       // pointing to a location within the browser. It may be displayed
+  //                       // either with Image.network or Image.memory after loading the image
+  //                       // bytes to memory.
+  //                       kIsWeb
+  //                           ? Image.network(imageFile!.path)
+  //                           : Image.file(File(imageFile!.path)))
+  //                   : Container(
+  //                       child: Center(
+  //                         child: AspectRatio(
+  //                             aspectRatio:
+  //                                 localVideoController.value.size != null
+  //                                     ? localVideoController.value.aspectRatio
+  //                                     : 1.0,
+  //                             child: VideoPlayer(localVideoController)),
+  //                       ),
+  //                       decoration: BoxDecoration(
+  //                           border: Border.all(color: Colors.pink)),
+  //                     ),
+  //               width: 64.0,
+  //               height: 64.0,
+  //             ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   /// Display a bar with buttons to change the flash and exposure modes
   Widget _modeControlRowWidget() {
@@ -623,7 +660,10 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
 
   void showInSnackBar(String message) {
     // ignore: deprecated_member_use
-    _scaffoldKey.currentState?.showSnackBar(SnackBar(content: Text(message)));
+    _scaffoldKey.currentState?.showSnackBar(SnackBar(
+      content: Text(message),
+      duration: const Duration(seconds: 2),
+    ));
   }
 
   void onViewFinderTap(TapDownDetails details, BoxConstraints constraints) {
@@ -706,12 +746,13 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
           imageFile = file;
           videoController?.dispose();
           videoController = null;
+          capturedImages.add(File(imageFile!.path));
         });
 
         File pickedImage = File(imageFile!.path);
         pickedImage.copy(filePath);
         // showInSnackBar('Picture saved to ${pickedImage.path} locally');
-        showInSnackBar('Image Captured');
+        showInSnackBar('Image Captured. Image Saved in $filePath');
 
         // if (file != null) {
         //   showInSnackBar('Picture saved to ${file.path}');
@@ -826,6 +867,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
         pickedVideo.copy(filePath);
         // showInSnackBar('Picture saved to ${pickedImage.path} locally');
         showInSnackBar('Video Captured');
+        capturedImages.add(File(videoFile!.path));
         _startVideoPlayer();
       }
     });
