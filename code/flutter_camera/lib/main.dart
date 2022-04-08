@@ -10,14 +10,17 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_camera/gallery_screen.dart';
+import 'package:flutter_camera/screens/gallery_screen.dart';
 import 'package:video_player/video_player.dart';
 import 'package:path_provider/path_provider.dart' as syspath;
+// import 'widgets/camera_preview_widget.dart';
 
-class CameraExampleHome extends StatefulWidget {
+class CameraHome extends StatefulWidget {
+  const CameraHome({Key? key}) : super(key: key);
+
   @override
-  _CameraExampleHomeState createState() {
-    return _CameraExampleHomeState();
+  _CameraHomeState createState() {
+    return _CameraHomeState();
   }
 }
 
@@ -43,7 +46,7 @@ void logError(String code, String? message) {
   }
 }
 
-class _CameraExampleHomeState extends State<CameraExampleHome>
+class _CameraHomeState extends State<CameraHome>
     with WidgetsBindingObserver, TickerProviderStateMixin {
   CameraController? controller;
   XFile? imageFile;
@@ -141,6 +144,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
                 padding: const EdgeInsets.all(1.0),
                 child: Center(
                   child: _cameraPreviewWidget(),
+                  // child: cameraPreviewWidget(),
                 ),
               ),
               decoration: BoxDecoration(
@@ -662,7 +666,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
     // ignore: deprecated_member_use
     _scaffoldKey.currentState?.showSnackBar(SnackBar(
       content: Text(message),
-      duration: const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 1000),
     ));
   }
 
@@ -868,7 +872,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
         // showInSnackBar('Picture saved to ${pickedImage.path} locally');
         showInSnackBar('Video Captured');
         capturedImages.add(File(videoFile!.path));
-        _startVideoPlayer();
+        // _startVideoPlayer();
       }
     });
   }
@@ -1094,7 +1098,7 @@ class CameraApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: CameraExampleHome(),
+      home: CameraHome(),
     );
   }
 }
